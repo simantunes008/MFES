@@ -19,22 +19,33 @@ pred stutter {
 
 pred read [u : User] {
 	// Read all notifications
-	notifications' = notifications - u.notifications
+	u.notifications = none
 }
 
 pred subscribe [u : User, e : Event] {
 	// Subscribe an event
 
+	// Não se pode inscrever no mesmo evento duas vezes
+	e not in u.subscriptions
+
+	subscriptions' = subscriptions + u -> e
 }
 
 pred unsubscribe [u : User, e : Event] {
 	// Unsubscribe from a event
 
+	// Tem de estar inscrito para cancelar a inscrição
+	e in u.subscriptions
+
+	subscriptions' = subscriptions - u -> e
 }
 
 pred occur [e : Event] {
 	// Occurrence of an event
 
+	User in subscriptions.e
+	
+	notifications' = notifications + User -> e
 }
 
 fact {

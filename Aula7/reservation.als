@@ -105,7 +105,7 @@ run Scenario5 {
 
 check OP1 {
 	// Reserved resources aren't available
-	all r : Resource, u : User | always (r in u.reservations implies r not in Available)
+	all u : User, r : Resource| always (r in u.reservations implies r not in Available)
 }
 
 check OP1b {
@@ -115,45 +115,49 @@ check OP1b {
 
 check OP2 {
 	// Used resources were reserved before
+	// The condition was once true
 	all u : User, r : Resource | always (use[u,r] implies once reserve[u,r])
 }
 
 check OP3 {
 	// Used resources can only be reserved again after a cleanup
-
+	// After means the condition will be true in the next state
+	all disj u1, u2 : User, r : Resource | always (use[u1,r] implies after (use[u2,r] implies once cleanup))
 }
 
 check OP4 {
 	// After a cleanup all unreserved resources are available
-
+	all r : Resource | always (cleanup implies after (r not in User.reservations implies r in Available))
 }
 
 check OP5 {
 	// Cancel undoes reserve
-
+	all u : User, r : Resource | reserve[u,r] and cancel[u,r] implies after (reservations'' = reservations and Available'' = Available)
 }
 
 check OP6 {
 	// If a cleanup occurs some resource was used before
-
+	all u : User, r : Resource | cleanup implies once use[u,r]
 }
 
 check OP7 {
 	// Used resources were not canceled since being reserved
-
+	all u : User, r : Resource | always (use[u,r] implies not cancel[u,r] since reserve[u,r])
 }
 
 check OP8 {
 	// Reserved resources can be used while not used or canceled
-
+	// all u : User, r : Resource | always (reserve[u,r] implies (use[u,r] implies !use[u,r] or cancel[u,r]))
+	all u : User, r : Resource | reserve[u,r] implies (!use[u,r] until use[u,r] or cancel[u,r] or always !use[u,r])
+	// Não foi usado até ser usado ou cancelado ou nunca usado (é estúpido mas é o que o contraexemplo diz)
 }
 
 check OP9 {
 	// The first event to occur will be a reservation
-
+	
 }
 
 check OP10 {
 	// If cleanups and cancels never occur the available resources keep diminishing
-
+	
 }

@@ -133,6 +133,8 @@ check OP4 {
 check OP5 {
 	// Cancel undoes reserve
 	all u : User, r : Resource | reserve[u,r] and cancel[u,r] implies after (reservations'' = reservations and Available'' = Available)
+	// ou
+	all u : User, r : Resource | always (reserve[u,r]; cancel[u,r]) implies Available'' = Available and reservations'' = reservations
 }
 
 check OP6 {
@@ -150,14 +152,16 @@ check OP8 {
 	// all u : User, r : Resource | always (reserve[u,r] implies (use[u,r] implies !use[u,r] or cancel[u,r]))
 	all u : User, r : Resource | reserve[u,r] implies (!use[u,r] until use[u,r] or cancel[u,r] or always !use[u,r])
 	// Não foi usado até ser usado ou cancelado ou nunca usado (é estúpido mas é o que o contraexemplo diz)
+	// Também podemos fazer assim
+	all u : User, r : Resource | always (reserve[u,r] implies after ((use[u,r] or cancel[u,r]) releases r in u.reservations))
 }
 
 check OP9 {
 	// The first event to occur will be a reservation
-	
+	always stutter or (stutter until (some u : User, r : Resource | reserve[u,r]))
 }
 
 check OP10 {
 	// If cleanups and cancels never occur the available resources keep diminishing
-	
+	always (not cleanup and all u : User, r : Resource | not cancel[u,r]) implies always (Available' in Available)
 }

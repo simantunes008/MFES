@@ -1,0 +1,76 @@
+
+(*
+
+*)
+
+
+module MergeSort
+
+  use int.Int
+  use list.List
+  use list.Mem
+  use list.Length
+  use list.Permut
+  use list.Append
+  use list.SortedInt
+
+
+
+  (* 1. Complete the definition of the 'split' function
+     	and prove its correctness.
+   *)
+  let rec function split (l :list int) : (list int, list int)
+    ensures { let (l1,l2) = result in permut l (l1 ++ l2) } 
+  =
+
+
+
+
+
+  (* 2. Write an appropriate contract  
+     	and prove the correctness of 'merge'.
+   *)
+  let rec function merge (l1 l2 :list int) : list int
+    requires { }
+    ensures  { } 
+  =
+    match l1, l2 with
+    | Nil, _ -> l2
+    | _, Nil -> l1
+    | (Cons a1 l1'), (Cons a2 l2') -> if (a1 <= a2)                
+                                      then let t = merge l1' l2
+				           in Cons a1 t
+                                      else let t = merge l1 l2'
+				           in Cons a2 t
+    end
+
+
+
+
+  
+  (* 3. Complete the contract and definition of 'mergesort'
+        and prove its correctness. 
+	Note the presence of a variant, since the recursion
+	pattern will be non-trivial. 
+   *)
+  let rec function mergesort (l :list int)
+    ensures {  } 
+    variant { length l }
+  =
+
+
+
+
+  (* 4. You have probably not been able to prove the 'variant
+        decrease' proof obligations for 'mergesort'.  
+	Try to solve this by adding an additional postcondition in
+        'split' stating that the resulting lists are both shorter than
+        the argument list.
+   *)
+
+
+  (* 5. Try solving any remaining unproved VCs by adding asserts
+     	in the code
+   *)
+
+end

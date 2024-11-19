@@ -1,0 +1,283 @@
+
+
+(*
+  1. Convert the Alloy specification to an abstract specification 
+     in WhyML, completing the definition (code and contracts) 
+     of the 'ghost' functions in the Notifications_Spec module.
+     A few helper functions are provided to facilitate this task. 
+
+  2. Include in the spec the following invariant and prove that
+     it is respected by every action function: 
+
+     always (all u :User, e :Event | 
+         u->e in notifications implies u->e in subscriptions)
+
+*)   
+
+
+module Notifications_Spec 
+
+  use set.Fset
+  
+(*
+sig Event {}
+sig User {
+	var subscriptions : set Event,
+	var notifications : set Event
+}
+*) 
+
+  type user 
+  type event 
+  
+  type stateT = { ghost mutable subscriptions : fset (user,event) ;
+       	       	  ghost mutable notifications : fset (user,event) }
+		  
+      invariant { true }
+
+      by { subscriptions = empty ; notifications = empty }
+
+  val state : stateT
+
+
+
+(*
+pred subscribe [u : User, e : Event] {
+	e not in u.subscriptions
+	subscriptions' = subscriptions + u->e
+	notifications' = notifications
+}
+*)
+  let ghost subscribe (u:user) (e:event)
+    requires { true }
+    ensures  { true }
+  = 
+    ()
+
+
+(*
+pred unsubscribe [u : User, e : Event] {
+	e in u.subscriptions
+	subscriptions' = subscriptions - u->e
+	notifications' = notifications - u->e
+}
+*)
+  let ghost unsubscribe (u:user) (e:event)
+    requires { true }
+    ensures  { true }
+  = 
+    ()
+
+
+
+(*
+pred read [u : User] {
+	some u.notifications
+	notifications' = notifications - u->Event
+	subscriptions' = subscriptions
+}
+*)
+
+  (* helper function
+   *)
+  val function excludePairsUser (u:user) (s:fset (user,event)) : fset (user,event)
+    ensures { forall x :user, y :event. mem (x,y) result <-> mem (x,y) s /\ x<>u }
+
+  let ghost read (u:user) 
+    requires { true }
+    ensures  { true }
+  = 
+    ()
+    
+
+
+
+(*
+pred occur [e : Event] {
+	notifications' = notifications + subscriptions :> e
+	subscriptions' = subscriptions
+}
+*)
+
+  (* helper function
+   *)
+  val function selectPairsEvent (e:event) (s:fset (user,event)) : fset (user,event)
+    ensures { forall x :user, y :event. mem (x,y) result <-> mem (x,y) s /\ y=e }
+
+  let ghost occur (e:event)
+    requires { true }
+    ensures  { true }
+  = 
+    ()
+
+
+end
+
+
+
+
+(*
+  3. Implement the concept using two finite maps as given in 
+     the state record type below. Note that efficiency-wise
+     it makes sense to store subscriptions as lists of users
+     associated to events, and notifications as lists of
+     events associated to users.
+     
+     Note that there are a number of implementation decisions
+     to be made: 
+     - lists may contain repetitions or not
+     - empty lists may be allowed in the dictionary or not. Note
+       that a dictionary containing an entry with an empty list is 
+       semantically equivalent to the dictionary without that entry
+     - you must be careful about inserting elements in lists, to make 
+       sure that the corresponding dictionary entry already exists.
+     
+     Make your choices and reflect them as appropriate implementation
+     invariants in the state record type. 
+
+     Then complete the definitions of functions 'subscribe', 
+     'unsubscribe', and 'read'. 
+
+   4. Function 'occur' is a bit more challenging, since it must use
+      a helper recursive function.       
+      - The auxiliary function 'notify_users' is already provided, but
+        you must complete its contract.
+      - Then complete the definition of 'occur'. Be careful not to execute 
+        ghost operations twice, both in the main and auxiliary functions,
+	whie still ensuring that the specification is respected. 
+
+ *)   
+
+
+module Notifications_List
+
+  use int.Int
+  use set.Fset
+  use list.List
+  use list.Mem
+  use list.Elements
+  use list.NumOcc
+
+
+  (* auxiliary list program function
+   *)
+  val function delete (x:'a) (l:list 'a) : list 'a
+    ensures  { num_occ x result = 0 }
+    ensures  { forall y :'a. y<>x -> num_occ y result = num_occ y l }
+
+
+  type user 
+  type event 
+
+  (* type of maps from events to lists of users *)
+  clone fmap.MapApp as EventMap with type key = event 
+  type eventMapUsers = EventMap.t (list user)
+
+  (* type of maps from users to lists of events *)
+  clone fmap.MapApp as UserMap with type key = user
+  type userMapEvents = UserMap.t (list event)
+
+
+
+  type stateT = { mutable subscriptions_ : eventMapUsers ;
+       	      	  mutable notifications_ : userMapEvents ;
+		  ghost mutable subscriptions : fset (user,event) ;
+       	       	  ghost mutable notifications : fset (user,event) }
+
+    (* Specification-level invariant.
+       Optional, since it has been proved in the previous module.
+     *)
+    invariant { subset notifications subscriptions }
+
+    (* Refinement correspondence. 
+     *)
+    invariant { true }
+
+    (* Implementation invariants
+     *) 
+    invariant { true }   
+ 
+    by { subscriptions_ = EventMap.create() ;
+       	 notifications_ = UserMap.create() ;
+	 subscriptions = empty ;
+	 notifications = empty }
+
+
+
+  val state : stateT
+
+
+
+  let subscribe (u:user) (e:event)
+    requires { true }
+  =
+    ()
+  
+
+
+
+  let unsubscribe (u:user) (e:event)
+     requires { true }
+  =   
+    ()
+
+
+
+  (* helper function
+   *)
+  val function excludePairsUser (u:user) (s:fset (user,event)) : fset (user,event)
+    ensures { forall x :user, y :event. Fset.mem (x,y) result <-> Fset.mem (x,y) s /\ x<>u }
+
+  let read (u:user) 
+     requires { true }
+  =   
+    ()
+    
+
+
+
+
+  (* Notify list of users of on event.
+   *)
+  let rec notify_users (l:list user) (e:event) : ()
+    requires { true }
+    ensures  { true }
+    variant  { l }
+  =
+  match l with
+  | Nil -> ()
+  | Cons u us -> notify_users us e ;
+    	      	 assert { Fset.mem (u,e) state.subscriptions } ;
+                 let unotifs = UserMap.find u state.notifications_ in
+    		 let updnotifs = Cons e unotifs in
+		 state.notifications_ <- UserMap.add u updnotifs state.notifications_
+		     ; 
+		 state.notifications <- union (singleton (u,e)) state.notifications 
+ 
+  end
+
+
+
+  (* helper function
+   *)
+  val function selectPairsEvent (e:event) (s:fset (user,event)) : fset (user,event)
+    ensures { forall x :user, y :event. Fset.mem (x,y) result <-> Fset.mem (x,y) s /\ y=e }
+
+  (* The precondition expresses an implementation-level restriction.
+   *)
+  let occur (e:event) : ()
+    requires { EventMap.mem e state.subscriptions_ }  
+    requires { true }
+    ensures  { true }
+  =
+    ()
+
+
+
+end
+
+
+
+
+
+

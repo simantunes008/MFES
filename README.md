@@ -5,7 +5,7 @@
 
 [Production line](http://alloy4fun.inesctec.pt/8tXWH7GYse4p72TFs)
 
-[Train station](http://alloy4fun.inesctec.pt/T9E86RFSFiNznsDfX)
+[Train station](http://alloy4fun.inesctec.pt/PDx7icZhrD4iyrBtN)
 
 ## Exercício 2
 [Resolução](http://alloy4fun.inesctec.pt/QXXuszPv78FawEmM9)

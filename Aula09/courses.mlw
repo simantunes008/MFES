@@ -1,0 +1,193 @@
+
+
+
+module Courses
+
+  use int.Int
+  use int.Abs
+
+  type person
+  predicate isProfessor (person) 
+  predicate isStudent (person) 
+  type course
+  type project
+  type grade = int
+
+ 
+  predicate teaches (person) (course)
+  predicate enrolled (person) (course)
+  
+  (* WhyML does not allow overloaded symbols *)
+  (* proposes and worksOn are the two 'projects' relations in the Alloy model *)
+  predicate proposes (course) (project)                    
+  predicate worksOn (person) (project)
+  
+  predicate grades (course) (person) (grade)
+
+
+  (* MODEL THE FOLLOWING SCENARIO, BY WRITING ADDITIONAL AXIOMS:  
+     - All MFES students already have grades
+     - proj1 is the (only) project proposed in MFES
+     - John and Lisa are two different students enrolled in MFES 
+     - John and Lisa both worked on proj1 
+   *)
+
+  constant mfes : course
+
+  constant proj1 : project
+
+  constant john : person
+  constant lisa : person
+
+  axiom mfesGrades : 
+    forall p:person. isStudent p /\ enrolled p mfes ->
+        exists g:grade. grades mfes p g
+  
+  axiom onlyProj1 :
+    proposes mfes proj1 /\ forall p:project. proposes mfes p -> 
+        p = proj1
+  
+  axiom mfesStudents :
+    isStudent john /\ isStudent lisa /\ john <> lisa /\ 
+    enrolled john mfes /\ enrolled lisa mfes 
+  
+  axiom worksOnProj1 :
+    worksOn john proj1 /\ worksOn lisa proj1 
+
+  (* Additional requirements. See below. *)
+  
+
+  (* WRITE APPROPRIATE GOALS OR LEMMAS TO SHOW THAT: 
+     - the above theory is not inconsistent 
+     - each project proposed by MFES has at least two students working on it
+     - Lisa has a grade in some course 
+     - Lisa is a student
+     - Only the students that work on proj1 can have the highest grade in MFES
+     - The only project where lisa works with john is proj1
+     - John and Lisa's grades in MFES do not differ by more than one unit 
+  *)   
+
+
+  (* Invalid -- theory is consistent *)
+  goal inconsistency : false
+
+  goal allProjectsTwoStudents : 
+    forall p:project. proposes mfes p ->
+        exists s1,s2:person. isStudent s1 /\ isStudent s2 /\ s1 <> s2 
+        /\ worksOn s1 p /\ worksOn s2 p
+
+  goal lisaGrade :
+    exists c:course, g:grade. grades c lisa g
+    
+  goal lisaStudent : 
+    isStudent lisa
+    
+  predicate hasHighest (c:course) (p:person) = 
+    forall g g1:grade, p1:person. grades c p g /\ isStudent p1 /\ 
+    grades c p1 g1 -> 
+        g >= g1
+
+  goal highestGradeMFES :
+    forall p:person. isStudent p /\ enrolled p mfes /\ hasHighest mfes p ->
+        worksOn p proj1
+    
+  goal lisaAndJohnOnlyProject:
+    forall p:project. worksOn john p /\ worksOn lisa p ->
+        p = proj1
+
+  goal lisaJohnGradesMFES : 
+      forall x y:grade. grades mfes lisa y /\ grades mfes john x -> 
+          y-1 <= x <= y+1
+
+
+  (* WHICH OF THE FOLLOWING REQUIREMENTS ARE NEEDED TO PROVE THE ABOVE GOALS?
+     Specify each requirement that you think it is necessary in an axiom
+     in the additional requirements section above *)
+     
+   (* - Only students can be enrolled in courses *)
+    axiom axm1 : 
+        forall p:person, c:course. enrolled p c -> isStudent p
+    
+   (* - Only professors can teach courses *)
+    axiom axm2 : 
+        forall p:person, c:course. teaches p c -> isProfessor p
+    
+   (* - Courses must have teachers *)
+    axiom axm3 : 
+        forall c:course. exists p:person. teaches p c
+   
+   (* - Projects are proposed by one course *)
+    axiom axm4a : 
+        forall p:project. exists c:course. proposes c p
+    axiom axm4b : 
+        forall c1 c2:course, p:project. proposes c1 p /\ 
+        proposes c2 p ->
+            c1 = c2
+   
+   (* - Only students work on projects, and projects must have someone working on them *)
+    axiom axm5a : 
+        forall pr :project, p :person. worksOn p pr -> isStudent p
+    axiom axm5b : 
+        forall pr :project. exists p :person. worksOn p pr
+   
+   (* - Students only work on projects of courses they are enrolled in *)
+    axiom axm6 : 
+        forall p :person, pr :project, c :course. worksOn p pr /\ 
+        proposes c pr -> 
+            enrolled p c
+   
+   (* - Students work on at most one project per course *)
+    axiom axm7 : 
+        forall p :person, pr1 pr2 :project, c :course. 
+        worksOn p pr1 /\ worksOn p pr2 /\ proposes c pr1 /\ proposes c pr2 ->
+            pr1 = pr2
+   
+   (* - Professors cannot teach themselves *)
+    axiom axm8 : 
+        forall p :person, c :course. teaches p c /\ enrolled p c -> 
+            false
+   
+   (* - A professor cannot teach colleagues *)
+    axiom axm9 : 
+        forall p1 p2:person, c:course. teaches p1 c /\ teaches p2 c ->
+            p1 = p2
+   
+   (* - Only students have grades *)
+    axiom axm10 : 
+        forall p :person, c :course, g :grade. grades c p g -> 
+            isStudent p 
+   
+   (* - Students only have grades in courses in which they are enrolled *)
+    axiom axm11 : 
+        forall p :person, c :course, g :grade. grades c p g -> 
+            enrolled p c
+   
+   (* - Students have at most one grade per course *)
+    axiom axm12 : 
+        forall p :person, c :course, g :grade. grades c p g -> 
+            enrolled p c
+   
+   (* - A student with the highest mark in a course must have worked on a project on that course *)
+    predicate workedOnProjcet (c:course) (p:person) = 
+        exists pr:project. proposes c pr /\ worksOn p pr
+    
+    axiom axm13 :
+        forall p:person, c:course. isStudent p /\ hasHighest c p -> workedOnProjcet c p
+   
+   (* - A student cannot work with the same colleague in different projects *)
+    axiom axm14 : 
+        forall p1 p2 :person, pr1 pr2 :project.
+        isStudent p1 /\ isStudent p2 /\ worksOn p1 pr1 /\ worksOn p1 pr2 /\ 
+        worksOn p2 pr1 /\ worksOn p2 pr2 ->
+            pr1 = pr2
+   
+   (* - Students working on the same project in a course cannot have marks differing by more than one unit *)
+	axiom axm15 : 
+	    forall c :course, p1 p2 :person, pr :project, g1 g2 :grade.
+        isStudent p1 /\ isStudent p2 /\ proposes c pr /\ worksOn p1 pr 
+        /\ worksOn p2 pr /\ grades c p1 g1 /\ grades c p2 g2 -> 
+            abs (g1 - g2) <= 1
+end
+
+
+
